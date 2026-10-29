@@ -1,0 +1,24 @@
+# =====================================================================
+# M3 池 bot 阵营 —— A 组（开发/调试专用参数）
+# POOL_BOT_PLAN 防自欺防线 2：最终 GATE 用同包络不同随机化种子的 B 组，
+# B 组参数已哈希封存（docs/m3_opponent/group_b_seal.json），本文件与
+# M3 全部开发链路**不得**引用 B 组明文（configs/bench/pool_factions_group_b.sealed.json，
+# 契约测试 tests/test_m3_opponent_model.py 钉死）。
+# =====================================================================
+pool_factions_group_a:
+  note: >-
+    A 组 = FACTION_SPECS 基础参数（external_harness/protocol/pool_bots.py，
+    已通过资格认证 docs/m3_opponent/certification.json，每原型自对弈 8000 手
+    实测统计全部落在 POOL_BOT_PLAN 声明区间内）+ 下列开发种子。
+  dev_seed_base: 20261002            # A 组自对弈/bench 复跑种子（跑前固定）
+  bench_bot_seed: {pivot: 701, frequency_bot: 702, loose_aggressive: 703}
+  pool_bot_seed: 20261079            # 池 bot 在 bench 对阵中的 rng 种子（A 组）
+  stakes:
+    nl2:
+      label: "$1/$2 (CoinPoker NL80) — GATE-MIN"
+      archetypes: [loose_passive_fish, recreational, semi_reg, reg]
+    nl5:
+      label: "$2/$5 (CoinPoker NL200) — GATE-1"
+      archetypes: [fish, recreational, semi_reg, reg]
+  forbidden_here:
+    - group_b_plaintext              # 本任务禁止读取（B 组留 M4）

@@ -1,0 +1,48 @@
+# =====================================================================
+# M4 Phase B2 — CoinPoker 现金桌抽水模型（费率固化进配置；TARGET_SPEC v3）
+# 来源：CoinPoker 官网 rake 页（https://coinpoker.com/rake/，2026-10-01 查证）
+# 现金桌 5%，按本手入池人数分档封顶（$=美元）：
+#   $1/$2 (NL80):  2人 $1.50 (0.75bb) | 3-4人 $3.60 (1.80bb) | 5+人 $6.00 (3.00bb)
+#   $2/$5 (NL200): 2人 $2.00 (0.40bb) | 3-4人 $4.80 (0.96bb) | 5+人 $8.00 (1.60bb)
+# bench 引擎口径：bb = 20 chips（nl2 chip=$0.1 / nl5 chip=$0.25）→
+#   封顶以 bb 记（chips 换算在 rake_model.RakeModel）。
+# =====================================================================
+rake:
+  version: m4-rake-coinpoker-v1
+  provider: coinpoker
+  source: "https://coinpoker.com/rake/ （官方公开费率页）"
+  retrieved: "2026-10-01"
+  rate: 0.05                     # 现金桌 5%（NLH/PLO 同率；本模型只跑 NLH）
+  bb_chips: 20                   # 引擎 1bb = 20 chips（两档同口径）
+  caps_bb_by_players_dealt:      # 封顶（bb；按官方 $ 表 ÷ 盲注换算）
+    "2": null
+    "3-4": null
+    "5+": null
+  # ↑ 此表由 stakes 表展开填充（下方）；此处保持 null 以防手改不一致。
+  stakes:
+    nl2:                         # $1/$2（bb=$2）
+      caps_bb_by_players_dealt: {"2": 0.75, "3-4": 1.80, "5+": 3.00}
+    nl5:                         # $2/$5（bb=$5）
+      caps_bb_by_players_dealt: {"2": 0.40, "3-4": 0.96, "5+": 1.60}
+    nl10:                        # $5/$10（bb=$10）
+      # ↓ 高额档封顶官方页未逐档列明（2026-10-11 检索；第三方评测仅给出
+      #   「封顶随级别比例递减」的区间描述）。null = 不封顶 → 保守高估抽水；
+      #   接入付费前需以官方页核实后填入。
+      caps_bb_by_players_dealt: {"2": null, "3-4": null, "5+": null}
+      caps_status: "unverified"
+    nl25:                        # $10/$25（bb=$25）
+      caps_bb_by_players_dealt: {"2": null, "3-4": null, "5+": null}
+      caps_status: "unverified"
+    nl50:                        # $25/$50（bb=$50）
+      caps_bb_by_players_dealt: {"2": null, "3-4": null, "5+": null}
+      caps_status: "unverified"
+  no_flop_no_drop: true          # 翻前结束不收水——行业惯例【假设】，
+                                 # 官方页未明示；GATE 报告按三口径列示
+                                 # （免抽水/净@nfd/净@全额）使该假设影响可审计。
+  no_flop_no_drop_note: >-
+    CoinPoker 官方 rake 页（2026-10-01 检索）未明示 no-flop-no-drop；
+    本配置采用行业惯例（翻前结束不收水）。若平台实际全额收水，
+    净收益按「净@全额」口径（同步报告）。
+  not_modeled:
+    - splash_pot_fee             # Splash Pot 附加费 0.1bb/次（bench 不生成 splash）
+    - promotions_rakeback        # 排行榜/返水活动（非费率表）

@@ -1,0 +1,78 @@
+{
+ "frozen_at": "2026-10-03 21:39:23",
+ "campaigns": {
+  "gate_min": {
+   "stake": "nl2",
+   "n_hands": 100000,
+   "segment_hands": 2000,
+   "seed_base": 20261101,
+   "workers": 4,
+   "composition_note": "POOL_BOT_PLAN 构成 6 席含 hero（6-max）：hero 顶替 reg 席 → 对手 5 席为娱乐重仓",
+   "seats": {
+    "1": {
+     "stake": "nl2",
+     "archetype": "loose_passive_fish"
+    },
+    "2": {
+     "stake": "nl2",
+     "archetype": "loose_passive_fish"
+    },
+    "3": {
+     "stake": "nl2",
+     "archetype": "recreational"
+    },
+    "4": {
+     "stake": "nl2",
+     "archetype": "recreational"
+    },
+    "5": {
+     "stake": "nl2",
+     "archetype": "semi_reg"
+    }
+   },
+   "pool_budget_profile": "strong"
+  },
+  "gate_1": {
+   "stake": "nl5",
+   "n_hands": 100000,
+   "segment_hands": 2000,
+   "seed_base": 20261201,
+   "workers": 4,
+   "composition_note": "POOL_BOT_PLAN 构成 6 席含 hero（6-max）：hero 顶替 2 reg 席之一 → 常规客重仓",
+   "seats": {
+    "1": {
+     "stake": "nl5",
+     "archetype": "fish"
+    },
+    "2": {
+     "stake": "nl5",
+     "archetype": "recreational"
+    },
+    "3": {
+     "stake": "nl5",
+     "archetype": "semi_reg"
+    },
+    "4": {
+     "stake": "nl5",
+     "archetype": "semi_reg"
+    },
+    "5": {
+     "stake": "nl5",
+     "archetype": "reg"
+    }
+   },
+   "pool_budget_profile": "strong"
+  }
+ },
+ "code_artifacts_sha256": {
+  "scripts/run_m4_gate_campaign.py": "342239aba5d6d1dc48cf1f02b539e0a4bd3627dfbdc6c737ed057989cae6ac3f",
+  "scripts/unseal_group_b_m4.py": "cc6f6ee8c17ba962d0e064b13ac0cb79818d14134b6cd9289eadbcee99048580",
+  "external_harness/protocol/cash_match_6max.py": "5150a07e674bd6adb8cb82ae250169d5d5b3799384a11160519cfcc541d4d5af",
+  "external_harness/protocol/pool_bots.py": "898e72d3686a6c190baf6005db186b45a09133c522f03ab1aa9c24fc6d6d8a2a",
+  "external_harness/protocol/rake_model.py": "728403e83482f8b7bbfee26143189a5bd412c07dce269f94140b955e0cd27b4a",
+  "configs/bench/rake_coinpoker.yaml": "cca8cc87274f0405f8e97b21384140b5b69833963bd16ec92b375c175dfbd2de",
+  "configs/config.yaml": "61e3ae98ec207be03568e1f7285c3ba351f21c9644c37945e35698acd51b0a41"
+ },
+ "note": "M4 GATE 冻结快照：解封 B 组前落盘。此后任何参数改动与本文件冲突 = 可审计（防「看过结果再调参」）。",
+ "self_sha256": "2edb1117fab309539cbc160549d31602263505efbb98e3a4f1b9d8234c7670da"
+}

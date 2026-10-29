@@ -1,0 +1,71 @@
+{
+ "frozen_at": "2026-10-05 19:14:03",
+ "campaign": "gate_gate1",
+ "spec": {
+  "stake": "nl5",
+  "n_hands": 100000,
+  "segment_hands": 2000,
+  "seed_base": 20261301,
+  "workers": 8,
+  "budget_profile": "strong",
+  "pool_params_provenance": "PRIOR_CONSENSUS：$2/$5 阵容 VPIP/PFR/3bet 目标值取公开统计共识（POOL_BOT_PLAN 冻结 v1），非本项目实测；B 组种子/扰动尺寸按 M3 封存协议解封（哈希 5b040e47…）",
+  "seats": {
+   "1": {
+    "stake": "nl5",
+    "archetype": "fish"
+   },
+   "2": {
+    "stake": "nl5",
+    "archetype": "recreational"
+   },
+   "3": {
+    "stake": "nl5",
+    "archetype": "semi_reg"
+   },
+   "4": {
+    "stake": "nl5",
+    "archetype": "semi_reg"
+   },
+   "5": {
+    "stake": "nl5",
+    "archetype": "reg"
+   }
+  },
+  "composition_note": "POOL_BOT_PLAN 构成 6 席含 hero（6-max）：1 fish + 2 recreational + 2 semi_reg + 2 reg，hero 顶替 2 reg 席之一 → 常规客重仓"
+ },
+ "spec_seats": {
+  "1": {
+   "stake": "nl5",
+   "archetype": "fish"
+  },
+  "2": {
+   "stake": "nl5",
+   "archetype": "recreational"
+  },
+  "3": {
+   "stake": "nl5",
+   "archetype": "semi_reg"
+  },
+  "4": {
+   "stake": "nl5",
+   "archetype": "semi_reg"
+  },
+  "5": {
+   "stake": "nl5",
+   "archetype": "reg"
+  }
+ },
+ "code_artifacts_sha256": {
+  "scripts/run_m4_gate_campaign.py": "5a8c484d5302eae006dd5f1ca9563a5a1073b2f773a700c54ff9cc9f920f8bc6",
+  "scripts/run_m4_gate_segment_once.py": "a6dad4af7034e7c422b9c29f2a66fe6cb3745c8aeebe3c89b6de8609e7529e19",
+  "scripts/unseal_group_b_m4.py": "cc6f6ee8c17ba962d0e064b13ac0cb79818d14134b6cd9289eadbcee99048580",
+  "external_harness/protocol/cash_match_6max.py": "5150a07e674bd6adb8cb82ae250169d5d5b3799384a11160519cfcc541d4d5af",
+  "external_harness/protocol/pool_bots.py": "898e72d3686a6c190baf6005db186b45a09133c522f03ab1aa9c24fc6d6d8a2a",
+  "external_harness/protocol/rake_model.py": "728403e83482f8b7bbfee26143189a5bd412c07dce269f94140b955e0cd27b4a",
+  "configs/bench/rake_coinpoker.yaml": "cca8cc87274f0405f8e97b21384140b5b69833963bd16ec92b375c175dfbd2de",
+  "configs/config.yaml": "61e3ae98ec207be03568e1f7285c3ba351f21c9644c37945e35698acd51b0a41",
+  "configs/bench/pool_factions_group_b.unsealed.json": "78336cb293fd941103c0b50edc0d0c67ffef0eb3a61f88366afc18ce311195cb"
+ },
+ "note": "R10 GATE-1 预注册冻结：首段 s000 落盘前固定全部协议参数（构成/手数/分段/种子/预算档/provenance/代码工件哈希）。R6 快照 m4_gate_frozen.json（gate_min/gate_1）原样保留未动。",
+ "self_sha256": "980633ece59073b382168519e44022de0d77201658cc3f8ac5fa764947d724ed"
+}

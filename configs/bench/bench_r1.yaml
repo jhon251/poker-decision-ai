@@ -1,0 +1,138 @@
+# =====================================================================
+# BENCH-1 r1 — 对抗基准配置（跑前固定；禁止中途修改）
+# 使命令复跑：python scripts/bench_b1.py --config configs/bench/bench_r1.yaml
+# =====================================================================
+bench:
+  name: BENCH1-r1
+  base_config: configs/config.yaml        # 生产配置基线
+  # 生产 runtime 的 bench 覆盖（声明式；与生产差异全部在此列明）：
+  #   * realtime 死线/agent 超时提高（绕开 UI 3000ms 死线——任务书允许并要求记录）
+  #   * storage/logs 隔离到 bench 目录（不污染生产决策日志）
+  runtime_overrides:
+    realtime:
+      deadline_ms: 60000
+      agent_timeout_ms: 30000
+    storage:
+      dir: data/bench_r1/repository
+    app:
+      logs_dir: logs/bench_r1
+  # R5 接线消融：villain_frequency_prior 权重 0.15（生产默认） vs 0.0
+  ablation:
+    weight_main: 0.15
+    weight_zero: 0.0
+  matchups:
+    - id: hero_vs_pivot
+      bot_kind: pivot
+      bot_seed: 701
+      note: check/fold 最弱基准
+    - id: hero_vs_frequency_bot
+      bot_kind: frequency_bot
+      bot_seed: 702
+      note: 群体频率随机化对手（frequency_prior 数据）
+    - id: hero_vs_loose_aggressive
+      bot_kind: loose_aggressive
+      bot_seed: 703
+      note: 固定宽范围松凶
+  # 消融组（frequency_bot 对阵，仅改 villain_frequency_prior.weight）
+  ablation_matchups:
+    - id: ablation_freqbot_w0.15
+      bot_kind: frequency_bot
+      bot_seed: 702
+      weight: 0.15
+    - id: ablation_freqbot_w0
+      bot_kind: frequency_bot
+      bot_seed: 702
+      weight: 0.0
+  seed_base: 20260930            # 全部 deal_seed = seed_base + hand_index*0x9E3779B1 (mod 2^64)
+  n_hands: 20000                 # 每组手数（机器不足时如实降额并标注统计效力）
+  workers: 8                     # 并行 worker（每 worker 独立 runtime）
+  stack_bb: 100
+
+  # ── SOLVER-1：solver 查表 on/off 对比（vs pivot；同 seedpack）──
+  solver_on_overrides:
+    solver:
+      provider: postflop
+      path: tools/bin/postflop-bench-cli.exe
+  solver_off_overrides:
+    solver:
+      provider: mock
+      path: ""
+  solver_matchups:
+    - id: solver_on_vs_pivot
+      bot_kind: pivot
+      bot_seed: 701
+      runtime_overrides_key: solver_on_overrides
+    - id: solver_off_vs_pivot
+      bot_kind: pivot
+      bot_seed: 701
+      runtime_overrides_key: solver_off_overrides
+
+  # ── SOLVER-2：锚定核心 ON（solver 查表 + strategy_core.anchor=solver）──
+  # 生产 config 默认即锚定 ON；此处声明式钉死 provider 与 path（跑前固定）。
+  # 分段协议：--hand-offset × --out-suffix 每段独立落盘，
+  #   scripts/merge_bench_segments.py 合并（deal_seed 推导与单次长跑一致）。
+  solver2_on_overrides:
+    solver:
+      provider: postflop
+      path: tools/bin/postflop-bench-cli.exe
+  solver2_matchups:
+    - id: solver2_on_vs_pivot
+      bot_kind: pivot
+      bot_seed: 701
+      runtime_overrides_key: solver2_on_overrides
+    - id: solver2_on_vs_frequency_bot
+      bot_kind: frequency_bot
+      bot_seed: 702
+      runtime_overrides_key: solver2_on_overrides
+
+  # ── M3（R5）：剥削预算旋钮扫描（3 预算 × 3 对手；任务书第 3 条）──
+  # 对 Δ−57.2 回撤的正面回答：偏离预算（strategy_core.dev_max_ev_loss_bb）
+  # 按池强度选档。对手极性：frequency_bot（历史基线对手）、pool nl2 fish
+  # （软端）、pool nl5 reg（全项目最强模拟对手）；A 组参数（认证合格）。
+  # 每格 10,000 手（分段 k00=4000/k01=4000/k02=2000，--hand-offset 推导一致）。
+  m3_knob_b005:
+    strategy_core: {dev_max_ev_loss_bb: 0.05}
+  m3_knob_b015:
+    strategy_core: {dev_max_ev_loss_bb: 0.15}
+  m3_knob_b030:
+    strategy_core: {dev_max_ev_loss_bb: 0.30}
+  m3_knob_matchups:
+    - {id: m3_knob_freqbot_b005, bot_kind: frequency_bot, bot_seed: 702, runtime_overrides_key: m3_knob_b005}
+    - {id: m3_knob_freqbot_b015, bot_kind: frequency_bot, bot_seed: 702, runtime_overrides_key: m3_knob_b015}
+    - {id: m3_knob_freqbot_b030, bot_kind: frequency_bot, bot_seed: 702, runtime_overrides_key: m3_knob_b030}
+    - {id: m3_knob_fish_b005, bot_kind: pool_bot, bot_seed: 20261079, runtime_overrides_key: m3_knob_b005, bot_params: {stake: nl2, archetype: loose_passive_fish}}
+    - {id: m3_knob_fish_b015, bot_kind: pool_bot, bot_seed: 20261079, runtime_overrides_key: m3_knob_b015, bot_params: {stake: nl2, archetype: loose_passive_fish}}
+    - {id: m3_knob_fish_b030, bot_kind: pool_bot, bot_seed: 20261079, runtime_overrides_key: m3_knob_b030, bot_params: {stake: nl2, archetype: loose_passive_fish}}
+    - {id: m3_knob_reg_b005, bot_kind: pool_bot, bot_seed: 20261079, runtime_overrides_key: m3_knob_b005, bot_params: {stake: nl5, archetype: reg}}
+    - {id: m3_knob_reg_b015, bot_kind: pool_bot, bot_seed: 20261079, runtime_overrides_key: m3_knob_b015, bot_params: {stake: nl5, archetype: reg}}
+    - {id: m3_knob_reg_b030, bot_kind: pool_bot, bot_seed: 20261079, runtime_overrides_key: m3_knob_b030, bot_params: {stake: nl5, archetype: reg}}
+
+  # ── M4（R6）Phase A3：facing-bet 锚点补齐后的旋钮复扫（Phase Gate）──
+  # 矩阵：{fish, freqbot} × {b005, b030} × 6,000 手（分段 g0=3000/g1=3000）。
+  # 闸门条件（任务书冻结）：预算格之间 records 真实分叉 且 软对手上高预算
+  # bb/100 显著高于低预算（配对逐手差 95% CI 不含 0）。
+  m4_knob_matchups:
+    - {id: m4_knob_freqbot_b005, bot_kind: frequency_bot, bot_seed: 702, runtime_overrides_key: m3_knob_b005}
+    - {id: m4_knob_freqbot_b030, bot_kind: frequency_bot, bot_seed: 702, runtime_overrides_key: m3_knob_b030}
+    - {id: m4_knob_fish_b005, bot_kind: pool_bot, bot_seed: 20261079, runtime_overrides_key: m3_knob_b005, bot_params: {stake: nl2, archetype: loose_passive_fish}}
+    - {id: m4_knob_fish_b030, bot_kind: pool_bot, bot_seed: 20261079, runtime_overrides_key: m3_knob_b030, bot_params: {stake: nl2, archetype: loose_passive_fish}}
+
+  # ── R10（KNOB）：facing-bet 路径修复（EXE-1 _lookup_facing range-set 键
+  #    索引回归修复）后的旋钮再复扫。矩阵：{fish, freqbot} × {b005, b030}
+  #    × 6,000 手（分段 g0/g1/g2 各 2,000；与 M4 复扫同 offsets → 同 deal_seed，
+  #    旧-vs-新可比性保留；判定=预算格间行为分叉为主，bb/100 差为辅）。
+  r10_knob_matchups:
+    - {id: r10_knob_freqbot_b005, bot_kind: frequency_bot, bot_seed: 702, runtime_overrides_key: m3_knob_b005}
+    - {id: r10_knob_freqbot_b030, bot_kind: frequency_bot, bot_seed: 702, runtime_overrides_key: m3_knob_b030}
+    - {id: r10_knob_fish_b005, bot_kind: pool_bot, bot_seed: 20261079, runtime_overrides_key: m3_knob_b005, bot_params: {stake: nl2, archetype: loose_passive_fish}}
+    - {id: r10_knob_fish_b030, bot_kind: pool_bot, bot_seed: 20261079, runtime_overrides_key: m3_knob_b030, bot_params: {stake: nl2, archetype: loose_passive_fish}}
+  # ── R10 诊断（一次性）：预算上不封顶 + 偏离信号门全开——隔离"旋钮惰性"
+  #    的层级（信号端从未触发 vs (0.05,0.30] 预算带为空）。100 手即可判别。
+  r10_diag_bmax:
+    strategy_core: {dev_max_ev_loss_bb: 5.0, dev_min_signal_conf: 0.0, dev_min_freq: 0.0, dev_min_ev_gain_bb: 0.0}
+  r10_diag_matchups:
+    - {id: r10_diag_freqbot_bmax, bot_kind: frequency_bot, bot_seed: 702, runtime_overrides_key: r10_diag_bmax}
+  r10_diag_bmax_defaultgates:
+    strategy_core: {dev_max_ev_loss_bb: 5.0}
+  r10_diag_matchups2:
+    - {id: r10_diag_freqbot_bmax_dg, bot_kind: frequency_bot, bot_seed: 702, runtime_overrides_key: r10_diag_bmax_defaultgates}

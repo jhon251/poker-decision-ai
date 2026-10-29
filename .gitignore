@@ -1,0 +1,78 @@
+# ---- 密钥与本地环境 ----
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.token
+secrets/
+
+# ---- 运行时数据（含个人数据，绝不提交）----
+logs/
+tmp_logs/
+data/
+data2/
+dist/
+dist_*/
+build/
+_publish/
+.publish/
+*.db
+*.db-wal
+*.db-shm
+*.jsonl
+*.log
+*.pkl
+frames/
+
+# ---- 第三方二进制 / 数据集 ----
+tools/bin/
+*.exe
+*.dll
+*.so
+*.dylib
+*.zip
+*.tar.gz
+*.7z
+
+# ---- 图像（真实牌桌截图可能含玩家昵称）----
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.webp
+# 仅允许仓库内的示意图（如需要请在下面逐条放行）
+!docs/assets/*.svg
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage.xml
+.coverage
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- 其它工作区噪音 ----
+.collab/
+.tmp/
+.pip-tmp/
+.v2c/
+.video_agent/
+cloud_upload/
+video_out/
+gt_confirm*/
+advice/
+cards/
+marketing/
+webapp/node_modules/

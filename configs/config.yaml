@@ -1,0 +1,194 @@
+# =====================================================================
+# Poker Decision Intelligence Framework V1.1 - 主配置
+# 所有可调参数集中于此；Agent 代码中不写死任何数值。
+# 支持 ${ENV:VAR} 环境变量插值；密钥请放 .env（见 .env.example）。
+# =====================================================================
+
+app:
+  name: Poker Decision Intelligence Framework
+  env: dev
+  logs_dir: logs
+  data_dir: data
+
+# ------------------------------------------------------------------ 游戏模式（V1.1 可插拔游戏模式架构）
+# 手动模式开关：null = 自动推断（手牌历史/state/kind），其余见下。
+#   game_mode: cash
+#   game_mode: tournament     + tournament_type: mtt | satellite | freezeout
+#   game_mode: bounty         + bounty_type: pko | ko | mystery
+# 切换模式不需要修改任何 Python 代码；CLI 参数 --game-mode 优先级更高。
+game_mode: null
+tournament_type: null
+bounty_type: null
+
+configs:
+  stakes: configs/stakes.yaml
+  ranges: configs/ranges.yaml
+  pipeline: configs/pipeline.yaml
+
+# ------------------------------------------------------------------ LLM（V2）
+# provider: mock | openai | kimi | deepseek | claude | anthropic | gemini
+#   openai / kimi / deepseek / gemini 走 OpenAI 兼容通道（端点自动默认）；
+#   claude / anthropic 走 Anthropic Messages API。
+# Fast/Deep 双模型：model = 实时/快路径模型；deep_model = Research/Deep 模式模型。
+# 全部支持 ${ENV:VAR:-默认值}：写 .env 或环境变量即可切换，无需改本文件与代码。
+llm:
+  enabled: true
+  provider: ${ENV:LLM_PROVIDER:-mock}
+  model: ${ENV:LLM_MODEL:-}             # 留空 → 用各 Provider 的默认模型
+  deep_model: ${ENV:LLM_DEEP_MODEL:-}   # Deep 路径模型；留空回退 model/Provider 默认
+  base_url: ${ENV:LLM_BASE_URL:-}          # provider=kimi/openai/gemini 时自动默认端点
+  api_key_env: ${ENV:LLM_API_KEY_ENV:-LLM_API_KEY}   # 从该环境变量读 Key
+  api_key: ${ENV:LLM_API_KEY:-}            # 或直接填（不推荐提交到仓库）
+  temperature: ${ENV:LLM_TEMPERATURE:-0.0}
+  timeout_s: ${ENV:LLM_TIMEOUT_S:-60}
+  max_tokens: ${ENV:LLM_MAX_TOKENS:-2048}
+  price_in_per_1m: ${ENV:LLM_PRICE_IN_PER_1M:-0.0}    # USD / 1M input tokens
+  price_out_per_1m: ${ENV:LLM_PRICE_OUT_PER_1M:-0.0}
+
+# ------------------------------------------------------------------ Vision（V2）
+vision:
+  provider: ${ENV:VISION_PROVIDER:-mock}   # mock | multimodal
+  fixture: configs/vision_fixture.example.yaml
+  model: ${ENV:VISION_MODEL:-}             # 多模态模型（留空则使用 llm.model）
+  min_field_confidence: 0.6                # 关键字段置信度阈值；低于 → 重新识别/人工输入（不假装成功）
+  retry_attempts: 1                        # 低置信自动重识次数
+
+# ------------------------------------------------------------------ Solver
+solver:
+  provider: ${ENV:SOLVER_PROVIDER:-postflop}     # postflop（SOLVER-1 真实 CFR：HU postflop 查表/现场求解）| realengine（P34 确定性规则引擎，非 GTO）| mock
+  path: ${ENV:POSTFLOP_SOLVER_PATH:-tools/bin/postflop-bench-cli.exe}   # postflop-bench-cli（封装 b-inary/postflop-solver crate）
+  seed: 42
+  # SOLVER-1：preflop 查表基线（source=chart，非 solver 产物）
+  # P30-9-CB：6-max GTO 频率图表（外部来源，见文件内归属声明）；HU 图表保留于 configs/solver/preflop_chart_hu.yaml
+  preflop_chart: ${ENV:PREFLOP_CHART:-configs/solver/preflop_chart_6max_gto.json}
+  # spot 库目录（realtime 查表；由 scripts/solve_spots.py 离线生成）
+  spot_dir: data/solver/spots_r1
+  # P30-9-BJ：求解预算（实测：200 迭代 ≈23s、1000 迭代 >100s ⇒ 旧值必然超时）
+  # 默认值 = 现状（1000/25s，即"总是超时降级"）；设 SOLVER_MAX_ITERATIONS=200 等即启用真实求解。
+  max_iterations: ${ENV:SOLVER_MAX_ITERATIONS:-1000}
+  timeout_s: ${ENV:SOLVER_TIMEOUT_S:-8}   # P30-9-BM：1000 迭代不可能在 25s 内完成 ⇒ 8s 快速失败（不再白等）
+
+# ------------------------------------------------------------------ Storage
+storage:
+  backend: json                 # memory | json
+  dir: data/repository
+
+# ------------------------------------------------------------------ 确定性计算
+equity:
+  # P30-9-BO：EV(raise) 的 fold_pct 来源：assumption（0.5，旧行为）| estimator（FoldEstimator）
+  fold_equity_source: ${ENV:FOLD_EQUITY_SOURCE:-assumption}
+  fold_pct_default: 0.5        # 估计不可用时的回退值（并标注来源）
+  iterations: 20000             # Monte Carlo 次数
+  seed: 42
+  exact_limit: 400000           # 枚举上限，超过则转 Monte Carlo
+
+icm:
+  max_exact: 9                  # <=N 人用精确 ICM，否则 Monte Carlo
+  samples: 20000
+  seed: 42
+
+# ------------------------------------------------------------------ Realtime / Deep（V2 双路径）
+# Realtime：低迭代 equity + 缓存 + 紧超时 + 禁用 LLM（确定性快引擎），目标 P50<500ms；
+# 外部 LLM/Solver 不可用时自动降级到确定性快路径（无需任何配置）。
+realtime:
+  equity_iterations: 2000       # 快路径 MC 迭代数（完整路径 20000）
+  agent_timeout_ms: 300         # 单 Agent 超时（超时→降级继续）
+  solver_timeout_ms: ${ENV:REALTIME_SOLVER_TIMEOUT_MS:-1200}   # P30-9-DG：solver 单独放宽
+                                #（库查表预热后 ~ms；冷启动需 150–300ms，否则实时常降级）
+  deadline_ms: 3000             # 整条快路径硬时限
+  allow_llm: false              # 默认不调用 LLM（确定性）；设 true 用 fast 模型
+deep:
+  agent_timeout_ms: 30000       # Deep 后台路径宽松超时
+  allow_llm: true
+  llm_tier: deep
+
+# ------------------------------------------------------------------ Strategy Core（SOLVER-2）
+# 求解器锚定 + 有界剥削偏离：spot 库命中（HU postflop 首入节点）→ base = solver
+# 策略（argmax 频率）；preflop → 图表基线（source=chart）。exploit/频率先验/
+# bluff 信号只能在 solver 基线附近做有预算偏离（预算全部声明于此）。
+# anchor: off = 旧启发式加权融合路径（SOLVER-2 之前的行为）。
+strategy_core:
+  anchor: solver               # solver | off
+  anchor_action_mode: argmax   # argmax | sample（sample 用 sample_seed，可复现）
+  sample_seed: 42
+  dev_min_freq: 0.10           # 偏离目标动作必须在 solver 显著支持内（freq ≥）
+  dev_max_ev_loss_bb: 0.05     # 偏离预算：solver 预测 EV 损失 ≤（bb/决策）
+  dev_min_signal_conf: 0.55    # 剥削信号置信下限
+  dev_min_ev_gain_bb: 0.10     # chart 锚定的量化偏离门（exploit 预测增量，bb）
+  # ── M3（R5）：剥削预算按池强度选档（对 Δ−57.2 的旋钮标定）──
+  # pool_budget_profiles 的值为候选档；M3 扫描结论（docs/m3_opponent/knob_scan.json）：
+  # 「对手越软→最优预算越高」形态未获支持——预算 0.05→0.30 的 bb/100 差异全部
+  # 在 CI 噪声内（fish 局零生效：轨迹逐位相同=偏离条件不触发；freqbot/reg 偏离
+  # 触发率 ~2/4000 手）。生产默认保持最保守 strong=0.05（EV 损失下界纪律）；
+  # M4 在 6-max（facing-bet 节点有锚点后）再重标定。
+  pool_budget_profiles:
+    soft: 0.30                 # 娱乐重仓池（$1/$2 GATE-MIN 桌面构成）——候选档
+    mixed: 0.15                # 混合池——候选档
+    strong: 0.05               # 常规客重仓池（$2/$5 GATE-1 桌面构成）——生产默认
+  pool_budget_profile: strong  # 生效档（与 0.05 基线一致→零回退）
+
+# ------------------------------------------------------------------ Deviation Agent（策略随机偏移）
+# 默认 15%；不允许超出 [min,max] 范围（除非 experiment_mode=true 且明确开启）
+deviation:
+  enabled: true
+  probability: 0.15
+  min_probability: 0.0
+  max_probability: 0.20
+  seed: 42                     # P34：固定种子（原 null=真随机 → 决策链不可复现；
+                               # 固定后同输入 → 同决策，满足 REAL 确定性要求）
+  experiment_mode: false        # true 时允许超出 max_probability（实验模式）
+
+# ------------------------------------------------------------------ Learning Agent
+learning:
+  min_sample_size: 50           # 低于此样本量的更新会被拒绝
+  significance_z: 1.96
+  decay_half_life_days: 90
+  update_confidence_threshold: 0.95
+  population_prior_strength: 200
+
+# ------------------------------------------------------------------ Frequency Prior Agent（MC1-R5）
+# 确定性对手动作频率先验（从仓库手牌统计；绝不 LLM 计算数值）。
+# 影子/生产共用：villain_frequency_prior 进入 judge 加权；权重在此调整。
+frequency_prior:
+  enabled: true                 # false → judge 完全忽略该信号（诚实降级）
+  weight: ${ENV:FP_WEIGHT:-0.15}   # judge 融合权重（villain_frequency_prior）
+  fold_from_range: ${ENV:FP_FOLD_FROM_RANGE:-false}
+  range_blend_weight: ${ENV:FP_RANGE_BLEND:-0.0}   # P30-9-BQ：群体统计与范围结构估计的混合权重（0=纯群体）   # P30-9-BP：统计缺失时用范围通道估计弃牌率（默认关）
+  fold_equity_gain: ${ENV:FP_GAIN_FE:-0.30}   # bet/raise 通道增益（弃牌率→fold equity）
+  call_channel_gain: ${ENV:FP_GAIN_CC:-0.20}   # 面对下注通道增益（continue→call↑ / fold↑）
+  min_sample_size: 20           # 个体层最低样本；不足 → 回退群体先验（附 warning）
+  half_life_days: 90            # 时间衰减半衰期（与 learning 一致）
+  wilson_z: 1.96                # Wilson 区间 z 值
+  source_dir: data/uoft/normalized   # canonical 语料目录（稳定 player_id + 逐街动作）
+  max_chunks: 5                 # 参与统计的 chunk 上限（持久缓存已落地；冷构建一次性 ~25s 可承受）
+  cache_path: data/cache/frequency_prior_cache.json
+  # ── M3（R5）：级别分段（POOL_BOT_PLAN 数据政策第 1 条前置条件）──
+  # 聚合索引外层按级别段分桶；查询只命中同段，跨级别语料互不污染。
+  # 导入第二语料（如 NL2:cash:6max）时只须换 level，无需改代码。
+  level: "NL10:cash:6max"       # 当前语料的级别段（沿用 population 段位约定）
+  # ── M3（R5）：会话级个体 villain 先验（个体 > 群体 两级先验的上层）──
+  session_enabled: true         # false → 只用语料层（退回 R5 行为）
+  session_min_sample_size: 20   # 会话个体层启用阈值；不足 → 回退语料层（附 warning）
+  session_persist_dir: data/cache/villain_sessions   # 会话恢复（per-session JSON）
+
+# ------------------------------------------------------------------ Agents
+agents:
+  defaults:
+    timeout_ms: 5000
+    retries: 1
+  vision:
+    timeout_ms: 30000           # 视觉/多模态更慢
+  solver:
+    timeout_ms: ${ENV:SOLVER_AGENT_TIMEOUT_MS:-30000}   # P30-9-BJ：可覆盖（200 迭代需 ≳30s）
+  hypothesis:
+    timeout_ms: 15000
+  research:
+    timeout_ms: 15000
+  debate:
+    timeout_ms: 15000
+  judge:
+    timeout_ms: 15000
+
+# ------------------------------------------------------------------ Replay
+replay:
+  output_dir: data/replay

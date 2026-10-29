@@ -1,0 +1,34 @@
+# =====================================================================
+# 默认范围库（Range Agent 的"起始点"，全部可编辑）
+# 这是通用 6-max 起步范围，不是 GTO 结论；个人研究中应逐步用
+# Population / Player 数据替换。语法见 docs/RANGES.md。
+# =====================================================================
+ranges:
+  positions: [UTG, MP, CO, BTN, SB, BB]
+
+  # ---- 开局加注范围（按位置） ----
+  open:
+    UTG: "22+,ATs+,A5s-A2s,KTs+,QTs+,JTs,T9s,98s,87s,76s,AJo+,KQo"
+    MP:  "22+,ATs+,A5s-A2s,K9s+,Q9s+,J9s+,T8s+,98s,87s,76s,65s,AJo+,KQo,KJo+"
+    CO:  "22+,A2s+,K8s+,Q8s+,J8s+,T8s+,97s+,87s,76s,65s,54s,ATo+,KTo+,QTo+,JTo"
+    BTN: "22+,A2s+,K2s+,Q5s+,J6s+,T6s+,96s+,85s+,75s+,64s+,54s,43s,A2o+,K9o+,Q9o+,J9o+,T8o+,98o"
+    SB:  "22+,A2s+,K2s+,Q4s+,J6s+,T7s+,97s+,86s+,75s+,64s+,53s+,A2o+,K8o+,Q9o+,J9o+,T9o"
+    BB:  "random:1.0"
+
+  # ---- 3Bet / 4Bet ----
+  three_bet:
+    default: "JJ+,AJs+,A5s-A2s,KQs,JTs,T9s,98s,87s,AQo+"
+  four_bet:
+    default: "QQ+,AKs,AKo,A5s-A4s"
+
+  # ---- 冷跟注（vs open raise） ----
+  cold_call:
+    default: "QQ-22,AQs-AJs,KQs,QJs,JTs,T9s,98s,87s,76s,AQo"
+
+  # ---- 持续下注（CBet） ----
+  cbet:
+    default: "AA-22,AKs-ATs,A5s-A2s,KQs-K9s,Q9s+,J9s+,T9s,98s,87s,76s,65s,AKo-AJo,KQo"
+
+  # ---- 河牌价值下注（粗筛，具体由 Range/Bluff Agent 结合画像修正） ----
+  river_value:
+    default: "AA-TT,AKs-AQs,KQs,AJo+,AQo+"

@@ -1,0 +1,157 @@
+{
+ "classification": "SEALED FOR M4 GATE — M3 DEV MUST NOT READ/USE",
+ "sealed_at": "2026-10-02 20:19:14",
+ "perturb_rules": {
+  "seed_space": "64-bit",
+  "bet_cbb_jitter": [
+   -0.05,
+   0.05
+  ]
+ },
+ "bots": {
+  "nl2/loose_passive_fish": {
+   "seed": 12902167056411959374,
+   "bet_cbb": 0.485,
+   "envelope": {
+    "vpip": [
+     0.55,
+     0.7
+    ],
+    "pfr": [
+     0.08,
+     0.15
+    ],
+    "threebet": [
+     0.0,
+     0.03
+    ]
+   }
+  },
+  "nl2/recreational": {
+   "seed": 15313677058428593219,
+   "bet_cbb": 0.517,
+   "envelope": {
+    "vpip": [
+     0.45,
+     0.55
+    ],
+    "pfr": [
+     0.15,
+     0.2
+    ],
+    "threebet": [
+     0.03,
+     0.05
+    ]
+   }
+  },
+  "nl2/semi_reg": {
+   "seed": 7809216602100324211,
+   "bet_cbb": 0.569,
+   "envelope": {
+    "vpip": [
+     0.3,
+     0.4
+    ],
+    "pfr": [
+     0.22,
+     0.28
+    ],
+    "threebet": [
+     0.06,
+     0.08
+    ]
+   }
+  },
+  "nl2/reg": {
+   "seed": 11822034957316430207,
+   "bet_cbb": 0.696,
+   "envelope": {
+    "vpip": [
+     0.26,
+     0.32
+    ],
+    "pfr": [
+     0.21,
+     0.26
+    ],
+    "threebet": [
+     0.08,
+     0.1
+    ]
+   }
+  },
+  "nl5/fish": {
+   "seed": 11237171411013741234,
+   "bet_cbb": 0.494,
+   "envelope": {
+    "vpip": [
+     0.5,
+     0.6
+    ],
+    "pfr": [
+     0.1,
+     0.15
+    ],
+    "threebet": [
+     0.0,
+     0.03
+    ]
+   }
+  },
+  "nl5/recreational": {
+   "seed": 15291594795336059469,
+   "bet_cbb": 0.554,
+   "envelope": {
+    "vpip": [
+     0.35,
+     0.45
+    ],
+    "pfr": [
+     0.18,
+     0.24
+    ],
+    "threebet": [
+     0.04,
+     0.06
+    ]
+   }
+  },
+  "nl5/semi_reg": {
+   "seed": 12388037383713932104,
+   "bet_cbb": 0.629,
+   "envelope": {
+    "vpip": [
+     0.28,
+     0.35
+    ],
+    "pfr": [
+     0.22,
+     0.27
+    ],
+    "threebet": [
+     0.07,
+     0.09
+    ]
+   }
+  },
+  "nl5/reg": {
+   "seed": 8299889230736019358,
+   "bet_cbb": 0.642,
+   "envelope": {
+    "vpip": [
+     0.24,
+     0.28
+    ],
+    "pfr": [
+     0.2,
+     0.24
+    ],
+    "threebet": [
+     0.09,
+     0.12
+    ]
+   }
+  }
+ }
+}

@@ -1,0 +1,235 @@
+# =====================================================================
+# Pipeline 编排计划（Manager 的声明式执行图）
+#
+# 每个 plan = 一组 stage；stage 内 Agent 并行，stage 间顺序执行。
+# input 模板用 $-引用路由数据：
+#   $request / $request.hero_id  -> 顶层请求
+#   $state / $state.board        -> Agent 'state' 的输出
+# Agent 的 applicable() 会动态跳过不适用的节点（如现金桌跳过 ICM），
+# 缺失依赖时下游 Agent 收到警告并自行降级/跳过（graceful degradation）。
+# =====================================================================
+plans:
+
+  # ------------------------------------------------ 现金桌单手分析
+  cash_hand:
+    stages:
+      - name: perception
+        agents:
+          - agent: vision
+            input: { request: "$request", image: "$request.image" }
+          - agent: state
+            input: { request: "$request", vision: "$vision" }
+      - name: context
+        agents:
+          - agent: board
+            input: { state: "$state" }
+          - agent: statistics
+            input: { state: "$state" }
+      - name: human_models_a
+        agents:
+          - agent: population
+            input: { state: "$state", statistics: "$statistics" }
+          - agent: opponent
+            input: { state: "$state", statistics: "$statistics" }
+      - name: human_models_b
+        agents:
+          - agent: confidence
+            input: { state: "$state", opponent: "$opponent", population: "$population", statistics: "$statistics" }
+          - agent: human_style
+            input: { state: "$state", opponent: "$opponent" }
+      - name: range_equity
+        agents:
+          - agent: range
+            input: { state: "$state", board: "$board", opponent: "$opponent", population: "$population", confidence: "$confidence" }
+      - name: equity_solver
+        agents:
+          - agent: equity
+            input: { state: "$state", range: "$range" }
+      - name: theory_side
+        agents:
+          - agent: solver
+            input: { state: "$state", range: "$range", equity: "$equity" }
+          - agent: risk
+            input: { state: "$state", equity: "$equity" }
+          - agent: image
+            input: { state: "$state", statistics: "$statistics", population: "$population", opponent: "$opponent" }
+          - agent: emotion
+            input: { state: "$state", opponent: "$opponent", statistics: "$statistics" }
+          - agent: strategy_evolution
+            input: { state: "$state", opponent: "$opponent" }
+      - name: exploit_bluff
+        agents:
+          - agent: exploit
+            input: { state: "$state", range: "$range", equity: "$equity", solver: "$solver", opponent: "$opponent", population: "$population", confidence: "$confidence", risk: "$risk" }
+          - agent: bluff
+            input: { state: "$state", board: "$board", range: "$range", equity: "$equity", solver: "$solver", opponent: "$opponent", population: "$population", confidence: "$confidence", strategy_evolution: "$strategy_evolution", emotion: "$emotion" }
+      - name: debate
+        agents:
+          - agent: debate
+            input: { state: "$state", equity: "$equity", solver: "$solver", exploit: "$exploit", bluff: "$bluff", risk: "$risk", confidence: "$confidence" }
+      - name: decision
+        agents:
+          - agent: judge
+            input: { state: "$state", board: "$board", range: "$range", equity: "$equity", solver: "$solver", exploit: "$exploit", opponent: "$opponent", population: "$population", human_style: "$human_style", confidence: "$confidence", bluff: "$bluff", image: "$image", emotion: "$emotion", strategy_evolution: "$strategy_evolution", risk: "$risk", debate: "$debate" }
+      - name: deviation
+        agents:
+          - agent: deviation
+            input: { state: "$state", judge: "$judge" }
+      - name: post
+        agents:
+          - agent: evaluation
+            input: { state: "$state", judge: "$judge", deviation: "$deviation", request: "$request" }
+          - agent: learning
+            input: { state: "$state", judge: "$judge", deviation: "$deviation", statistics: "$statistics", opponent: "$opponent", population: "$population", confidence: "$confidence", request: "$request" }
+          - agent: research
+            input: { learning: "$learning", statistics: "$statistics" }
+
+  # ------------------------------------------------ 锦标赛单手分析
+  # 在现金桌基础上加入 ICM / 阶段 / 盲注压力 / 卫星赛 / ICM 剥削
+  tournament_hand:
+    stages:
+      - name: perception
+        agents:
+          - agent: vision
+            input: { request: "$request", image: "$request.image" }
+          - agent: state
+            input: { request: "$request", vision: "$vision" }
+      - name: tournament_context
+        agents:
+          - agent: tournament_stage
+            input: { state: "$state" }
+          - agent: blind_pressure
+            input: { state: "$state", tournament_stage: "$tournament_stage" }
+          - agent: board
+            input: { state: "$state" }
+          - agent: statistics
+            input: { state: "$state" }
+      - name: icm
+        agents:
+          - agent: icm
+            input: { state: "$state" }
+      - name: satellite
+        agents:
+          - agent: satellite
+            input: { state: "$state", icm: "$icm", tournament_stage: "$tournament_stage" }
+      - name: human_models_a
+        agents:
+          - agent: population
+            input: { state: "$state", statistics: "$statistics", tournament_stage: "$tournament_stage" }
+          - agent: opponent
+            input: { state: "$state", statistics: "$statistics" }
+      - name: human_models_b
+        agents:
+          - agent: confidence
+            input: { state: "$state", opponent: "$opponent", population: "$population", statistics: "$statistics" }
+          - agent: human_style
+            input: { state: "$state", opponent: "$opponent" }
+      - name: range_equity
+        agents:
+          - agent: range
+            input: { state: "$state", board: "$board", opponent: "$opponent", population: "$population", confidence: "$confidence", tournament_stage: "$tournament_stage" }
+      - name: equity_solver
+        agents:
+          - agent: equity
+            input: { state: "$state", range: "$range" }
+      - name: theory_side
+        agents:
+          - agent: solver
+            input: { state: "$state", range: "$range", equity: "$equity" }
+          - agent: risk
+            input: { state: "$state", equity: "$equity", icm: "$icm", blind_pressure: "$blind_pressure" }
+          - agent: image
+            input: { state: "$state", statistics: "$statistics", population: "$population", opponent: "$opponent" }
+          - agent: emotion
+            input: { state: "$state", opponent: "$opponent", statistics: "$statistics" }
+          - agent: strategy_evolution
+            input: { state: "$state", opponent: "$opponent" }
+      - name: exploit_bluff
+        agents:
+          - agent: icm_exploit
+            input: { state: "$state", icm: "$icm", population: "$population", confidence: "$confidence", tournament_stage: "$tournament_stage", satellite: "$satellite" }
+          - agent: exploit
+            input: { state: "$state", range: "$range", equity: "$equity", solver: "$solver", opponent: "$opponent", population: "$population", confidence: "$confidence", risk: "$risk", icm_exploit: "$icm_exploit" }
+          - agent: bluff
+            input: { state: "$state", board: "$board", range: "$range", equity: "$equity", solver: "$solver", opponent: "$opponent", population: "$population", confidence: "$confidence", strategy_evolution: "$strategy_evolution", emotion: "$emotion", icm: "$icm", tournament_stage: "$tournament_stage" }
+      - name: debate
+        agents:
+          - agent: debate
+            input: { state: "$state", equity: "$equity", solver: "$solver", exploit: "$exploit", bluff: "$bluff", risk: "$risk", icm: "$icm", confidence: "$confidence" }
+      - name: decision
+        agents:
+          - agent: judge
+            input: { state: "$state", board: "$board", range: "$range", equity: "$equity", solver: "$solver", exploit: "$exploit", opponent: "$opponent", population: "$population", human_style: "$human_style", confidence: "$confidence", bluff: "$bluff", image: "$image", emotion: "$emotion", strategy_evolution: "$strategy_evolution", risk: "$risk", icm: "$icm", tournament_stage: "$tournament_stage", satellite: "$satellite", icm_exploit: "$icm_exploit", blind_pressure: "$blind_pressure", debate: "$debate" }
+      - name: deviation
+        agents:
+          - agent: deviation
+            input: { state: "$state", judge: "$judge" }
+      - name: post
+        agents:
+          - agent: evaluation
+            input: { state: "$state", judge: "$judge", deviation: "$deviation", request: "$request" }
+          - agent: learning
+            input: { state: "$state", judge: "$judge", deviation: "$deviation", statistics: "$statistics", opponent: "$opponent", population: "$population", confidence: "$confidence", request: "$request" }
+          - agent: research
+            input: { learning: "$learning", statistics: "$statistics" }
+
+  # ------------------------------------------------ 离线回放（含真实结果）
+  # 与 cash_hand 相同，但 request 携带 outcome，learning 默认关闭（request.skip_learning）
+  replay_hand:
+    stages:
+      - name: perception
+        agents:
+          - agent: vision
+            input: { request: "$request", image: "$request.image" }
+          - agent: state
+            input: { request: "$request", vision: "$vision" }
+      - name: context
+        agents:
+          - agent: board
+            input: { state: "$state" }
+          - agent: statistics
+            input: { state: "$state" }
+      - name: human_models_a
+        agents:
+          - agent: population
+            input: { state: "$state", statistics: "$statistics" }
+          - agent: opponent
+            input: { state: "$state", statistics: "$statistics" }
+      - name: human_models_b
+        agents:
+          - agent: confidence
+            input: { state: "$state", opponent: "$opponent", population: "$population", statistics: "$statistics" }
+      - name: analysis
+        agents:
+          - agent: range
+            input: { state: "$state", board: "$board", opponent: "$opponent", population: "$population", confidence: "$confidence" }
+          - agent: equity
+            input: { state: "$state", range: "$range" }
+      - name: theory
+        agents:
+          - agent: solver
+            input: { state: "$state", range: "$range", equity: "$equity" }
+          - agent: risk
+            input: { state: "$state", equity: "$equity" }
+      - name: exploit_bluff
+        agents:
+          - agent: exploit
+            input: { state: "$state", range: "$range", equity: "$equity", solver: "$solver", opponent: "$opponent", population: "$population", confidence: "$confidence", risk: "$risk" }
+          - agent: bluff
+            input: { state: "$state", board: "$board", range: "$range", equity: "$equity", solver: "$solver", opponent: "$opponent", population: "$population", confidence: "$confidence" }
+      - name: debate
+        agents:
+          - agent: debate
+            input: { state: "$state", equity: "$equity", solver: "$solver", exploit: "$exploit", bluff: "$bluff", risk: "$risk", confidence: "$confidence" }
+      - name: decision
+        agents:
+          - agent: judge
+            input: { state: "$state", board: "$board", range: "$range", equity: "$equity", solver: "$solver", exploit: "$exploit", opponent: "$opponent", population: "$population", confidence: "$confidence", bluff: "$bluff", risk: "$risk", debate: "$debate" }
+      - name: deviation
+        agents:
+          - agent: deviation
+            input: { state: "$state", judge: "$judge" }
+      - name: evaluation
+        agents:
+          - agent: evaluation
+            input: { state: "$state", judge: "$judge", deviation: "$deviation", request: "$request" }

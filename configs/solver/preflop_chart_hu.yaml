@@ -1,0 +1,35 @@
+# =====================================================================
+# SOLVER-1 — HU preflop 查表基线（source=chart；**非 solver 产物、非均衡解**）
+# 数据起点 = configs/ranges.yaml 的已声明范围（任务书允许的查表路线）。
+# 语义：按手牌对范围成员资格做 1/0 查表（无混合频率——图表基线的诚实形态）。
+# =====================================================================
+chart:
+  name: preflop_chart_hu_r1
+  source: chart
+  source_note: >-
+    以 configs/ranges.yaml 已声明范围为起点的 HU 查表基线；
+    非 postflop solver 产物、非 GTO 均衡解、不冒充 solver 输出。
+  scenarios:
+    # SB 首入（HU 按钮位 = SB）
+    sb_open:
+      position: SB
+      facing: none
+      actions:
+        - action: raise
+          size_bb: 2.5
+          if_in_range: open.SB
+        - action: fold
+          if_in_range: null            # 兜底：不在 open 范围 → 弃牌
+    # BB 面对 SB open（2.5bb）
+    bb_vs_sb_open:
+      position: BB
+      facing: raise
+      actions:
+        - action: raise
+          size_bb: 11.0                # 3-bet 到 11bb
+          if_in_range: three_bet.default
+        - action: call
+          if_in_range: cold_call.default
+        - action: fold
+          if_in_range: null
+  ranges_file: configs/ranges.yaml

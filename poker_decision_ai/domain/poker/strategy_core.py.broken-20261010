@@ -1,0 +1,87 @@
+"""Strategy Core v3 (P41→P44): 确定性 EV / Mode-aware Utility 核。
+
+定位（P41-P44 审计冻结）：
+  - Judge 的 primary strategy source（CASH/MTT/PKO 统一入口）；
+  - RULES 引擎保留为 deterministic prior / fallback；
+  - 外部 Solver 保留为 solver prior（未配置不伪造）；
+  - 纯函数、确定性、无随机不可控（fold/ICM 通道固定种子）、无 LLM。
+
+v3 目标函数（显式 objective，禁止冒充；单位 = chip-equivalent bb）：
+  CASH  chip_ev            : U = chip EV（bb）。k+=k-=1、无 bounty →
+                              与 P41-P43 数值完全一致（冻结兼容）。
+  MTT   chip_ev+icm        : U = gain×k+ − loss×k−。k± 由 ICM 边际
+                              （domain icm() 三点差分）导出：k+ = λ+/λ、
+                              k− = λ−/λ、λ = (λ++λ−)/2。风险厌恶（k−>k+）
+                              自动压低大尺寸下注/大跟注——ICM 成为
+                              action/size utility 的组成部分。
+  PKO/KO/Mystery
+        chip_ev(+icm)+bounty: U = 上式 + bounty_util（仅淘汰型候选：
+                              allin 被 call 且赢 → P(eliminate)×赏金）。
+  ICM 输入缺失 → objective 诚实回退 chip_ev（icm_available=False），
+  绝不伪造 ICM；bounty 缺失/未揭晓 → 不伪造 bounty utility。
+
+v2 三种 EV 模式（显式标记于 EvResult.ev_mode，禁止伪造更高模式）：
+  distribution+fold : outcome 分布(win/lose/tie) + fold equity 证据可用
+                      EV(bet/raise) = p_f×P + p_c×[eq'×(P+s)−(1−eq')×s]
+  distribution      : 仅 outcome 分布（win' = win + tie/2），fold 回退 always-called
+  point_fallback    : P41 语义（点估计 equity，always-called）
+
+假设（诚实声明，禁止当作 GTO）：
+  A1 单街近似：不计未来街的 EV。
+  A3 p(win|called) ≈ hero_equity vs 当前范围（跟注范围更强未建模）。
+  A4 多人池：单主对手，不做范围交互。
+  A5 目标函数按 mode 显式声明（chip_ev / chip_ev+icm / +bounty）。
+  A6 ICM utility 为边际线性化（k± 三点差分，复用冻结 domain icm()，
+     非完整 ICM solver）；完整 push/fold 与多街树不在 P44。
+  A7 bounty utility 仅淘汰型候选（bounty≠额外 equity）；赏金单位=筹码
+     （vision GT 口径）；Mystery 未揭晓值不伪造。
+  A2 按实际证据模式动态声明（fold 通道见 fold_equity.py；无证据时回退
+     always-called 并明示 fallback——绝不虚构弃牌概率）。
+
+UNKNOWN 语义：任一关键输入缺失/非法（equity 缺失、bb/pot 非法、game_type
+缺失）→ EvResult.available=False，绝不伪造 EV；ICM/bounty 缺失 → 降级
+并显式标注（不默认为 0 后宣称已支持）。
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any
+
+from .bounty import BountyInfo, knockout_probability
+from .fold_equity import FoldEstimator
+from .icm import icm
+
+# 下注尺寸候选（占底池比）——与 RULES 引擎的 SMALL/VALUE 分数同族
+BET_FRACTIONS: tuple[float, ...] = (0.33, 0.5, 0.66, 1.0)
+# 加注至（×to_call）候选——与 RULES 的 RAISE_TO_X/RAISE_TO_X_PF 同族
+RAISE_TO_MULTS: tuple[float, ...] = (2.5, 3.0)
+
+# P44 ICM 边际差分参数（声明于 A6；确定性：icm 种子随 compute_ev seed）
+ICM_STEP_FRAC = 0.02            # 步长 = max(bb, 2% hero 栈)（封顶 40% 防退化）
+ICM_MAX_EXACT = 7               # ≤7 人解析 ICM，>7 人 MC
+ICM_MC_SAMPLES = 2000
+ICM_KAPPA_BOUNDS = (0.25, 4.0)  # k± 合理性夹紧（防数值噪声冒充极端风险厌恶）
+
+# ───────────────── P56 v3.1：SACA 街道感知延续价值（声明式，非 solver） ─────────────────
+# 动机（P55 诊断）：单街 EV 下 call 无多街/隐含赔率价值（call agreement 0.7%）、
+# check 无未来街价值（fold 证据激活后 check→bet 占变化的 95.5%）。v3.1 加入
+# 三项**加性**延续价值（CV），全部确定性、声明式常数、缺信息即中性（不猜测）：
+#   A8 realization：被动动作（call/check）的未来街权益实现系数 R(street, IP/OOP)
+#      作用于 F_future（未来下注预算）——IP 实现高于公平份额、OOP 低于；
+#   A9 implied odds：听牌（同花听 9 / OESD 8 / 卡顺 4 outs，确定性数牌）
+#      的隐含赔率 κ×p_improve×F_future——call/check 均可获得；
+#   A10 initiative：bet/raise 被跟分支的下街主动权系数 INIT(street, IP/OOP)
+#      ——OOP=1.0（不惩罚也不奖励），IP 略高（主动权实现）。
+# 不变量：river/preflop 无 CV（逐位保持 P41-P45 语义）；fold 恒 0；
+#   CASH utility==ev 位等（CV 计入 gain 后再走 k± 缩放）；位置/手牌缺失 →
+#   CV 中性（R=1、implied=0——UNKNOWN 不猜测）；确定性纯函数。
+CV_MODEL = "saca-1.0"
+REALIZATION = {("flop", True): 1.10, ("flop", False): 0.90,
+               ("turn", True): 1.06, ("turn", False): 0.94}
+INITIATIVE = {("flop", True): 1.06, ("flop", False): 1.00,
+              ("turn", True): 1.04, ("turn", False): 1.00}
+STREETS_LEFT = {"flop": 2, "turn": 1, "river": 0}
+FUTURE_POT_FRACTION = 0.5       # 每条剩余街的期望下注预算（占当前 pot，声明）
+KAPPA_IMPLIED = 0.6             # 命中时可期望追加收回的未来下注份额（声明）
+MIXED_MARGIN_FRAC_POT = 0.10    # competitive_actions 的 utility 边际（占 pot）
+

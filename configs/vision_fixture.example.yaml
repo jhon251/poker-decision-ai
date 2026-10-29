@@ -1,0 +1,26 @@
+# Vision fixture 示例（vision.provider=mock 时使用）
+# 复制本文件内容或新建 fixtures，并把 config.yaml 中 vision.fixture 指向它。
+source: mock
+hero_seat: 3
+button_seat: 2
+street: flop
+hole_cards: [As, Kd]
+board: [Qh, 7d, 2c]
+seats:
+  - { seat: 1, name: Alice, stack: 25.00, in_hand: false }
+  - { seat: 2, name: Bob,   stack: 31.25, in_hand: true }
+  - { seat: 3, name: Hero,  stack: 24.38, in_hand: true }
+  - { seat: 4, name: Carol, stack: 20.50, in_hand: false }
+  - { seat: 5, name: Dave,  stack: 28.25, in_hand: false }
+  - { seat: 6, name: Eve,   stack: 25.00, in_hand: false }
+pot: 10.10
+current_bet: 3.75
+to_call: 3.75
+blinds: { sb: 0.10, bb: 0.25 }
+ante: 0.0
+available_actions: [fold, call, raise]
+action_text: "Bob bets $3.75"
+confidence: 0.85
+warnings: []
+extra:
+  stakes: NL10

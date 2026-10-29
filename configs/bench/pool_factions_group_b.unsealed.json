@@ -1,0 +1,455 @@
+{
+ "unsealed_at": "2026-10-03 21:18:21",
+ "verified_sha256": "5b040e476efed4d5e70d0d6c010e5ca498808a1d75b6c556a8e5ed11428ba820",
+ "registry": "docs\\m3_opponent\\group_b_seal.json",
+ "perturb_rules": {
+  "seed_space": "64-bit",
+  "bet_cbb_jitter": [
+   -0.05,
+   0.05
+  ]
+ },
+ "note": "M4 GATE 专用。隐藏内容 = seed + bet_cbb（M3 封存协议）；postflop 行为模型为 M4 v2（结构升级，非封存内容；两档原型同一模型同一包络——诚实声明见 M4 报告）。",
+ "bots": {
+  "nl2/loose_passive_fish": {
+   "seed": 12902167056411959374,
+   "bet_cbb": 0.485,
+   "envelope": {
+    "vpip": [
+     0.55,
+     0.7
+    ],
+    "pfr": [
+     0.08,
+     0.15
+    ],
+    "threebet": [
+     0.0,
+     0.03
+    ]
+   },
+   "post_envelope": {
+    "aggr": {
+     "flop": [
+      0.06,
+      0.4
+     ],
+     "turn": [
+      0.05,
+      0.4
+     ],
+     "river": [
+      0.04,
+      0.4
+     ]
+    },
+    "call": {
+     "flop": [
+      0.8,
+      0.98
+     ],
+     "turn": [
+      0.78,
+      0.98
+     ],
+     "river": [
+      0.75,
+      0.98
+     ]
+    },
+    "strength_conditioned": {
+     "fold_weak_max": 0.3,
+     "call_strong_min": 0.8,
+     "monotonic_call": true,
+     "monotonic_tol": 0.06
+    }
+   },
+   "model_base": "FACTION_SPECS v2 (m4-pool-bots-v2-strength)"
+  },
+  "nl2/recreational": {
+   "seed": 15313677058428593219,
+   "bet_cbb": 0.517,
+   "envelope": {
+    "vpip": [
+     0.45,
+     0.55
+    ],
+    "pfr": [
+     0.15,
+     0.2
+    ],
+    "threebet": [
+     0.03,
+     0.05
+    ]
+   },
+   "post_envelope": {
+    "aggr": {
+     "flop": [
+      0.08,
+      0.45
+     ],
+     "turn": [
+      0.07,
+      0.42
+     ],
+     "river": [
+      0.06,
+      0.4
+     ]
+    },
+    "call": {
+     "flop": [
+      0.42,
+      0.72
+     ],
+     "turn": [
+      0.38,
+      0.72
+     ],
+     "river": [
+      0.35,
+      0.72
+     ]
+    },
+    "strength_conditioned": {
+     "fold_weak_max": 0.8,
+     "call_strong_min": 0.75,
+     "monotonic_call": true,
+     "monotonic_tol": 0.06
+    }
+   },
+   "model_base": "FACTION_SPECS v2 (m4-pool-bots-v2-strength)"
+  },
+  "nl2/semi_reg": {
+   "seed": 7809216602100324211,
+   "bet_cbb": 0.569,
+   "envelope": {
+    "vpip": [
+     0.3,
+     0.4
+    ],
+    "pfr": [
+     0.22,
+     0.28
+    ],
+    "threebet": [
+     0.06,
+     0.08
+    ]
+   },
+   "post_envelope": {
+    "aggr": {
+     "flop": [
+      0.15,
+      0.55
+     ],
+     "turn": [
+      0.13,
+      0.52
+     ],
+     "river": [
+      0.11,
+      0.5
+     ]
+    },
+    "call": {
+     "flop": [
+      0.5,
+      0.76
+     ],
+     "turn": [
+      0.38,
+      0.78
+     ],
+     "river": [
+      0.42,
+      0.78
+     ]
+    },
+    "strength_conditioned": {
+     "fold_weak_max": 0.7,
+     "call_strong_min": 0.8,
+     "monotonic_call": true,
+     "monotonic_tol": 0.06
+    }
+   },
+   "model_base": "FACTION_SPECS v2 (m4-pool-bots-v2-strength)"
+  },
+  "nl2/reg": {
+   "seed": 11822034957316430207,
+   "bet_cbb": 0.696,
+   "envelope": {
+    "vpip": [
+     0.26,
+     0.32
+    ],
+    "pfr": [
+     0.21,
+     0.26
+    ],
+    "threebet": [
+     0.08,
+     0.1
+    ]
+   },
+   "post_envelope": {
+    "aggr": {
+     "flop": [
+      0.22,
+      0.62
+     ],
+     "turn": [
+      0.19,
+      0.58
+     ],
+     "river": [
+      0.16,
+      0.55
+     ]
+    },
+    "call": {
+     "flop": [
+      0.55,
+      0.8
+     ],
+     "turn": [
+      0.5,
+      0.8
+     ],
+     "river": [
+      0.48,
+      0.8
+     ]
+    },
+    "strength_conditioned": {
+     "fold_weak_max": 0.62,
+     "call_strong_min": 0.85,
+     "monotonic_call": true,
+     "monotonic_tol": 0.06
+    }
+   },
+   "model_base": "FACTION_SPECS v2 (m4-pool-bots-v2-strength)"
+  },
+  "nl5/fish": {
+   "seed": 11237171411013741234,
+   "bet_cbb": 0.494,
+   "envelope": {
+    "vpip": [
+     0.5,
+     0.6
+    ],
+    "pfr": [
+     0.1,
+     0.15
+    ],
+    "threebet": [
+     0.0,
+     0.03
+    ]
+   },
+   "post_envelope": {
+    "aggr": {
+     "flop": [
+      0.06,
+      0.4
+     ],
+     "turn": [
+      0.05,
+      0.4
+     ],
+     "river": [
+      0.04,
+      0.4
+     ]
+    },
+    "call": {
+     "flop": [
+      0.78,
+      0.98
+     ],
+     "turn": [
+      0.76,
+      0.98
+     ],
+     "river": [
+      0.73,
+      0.98
+     ]
+    },
+    "strength_conditioned": {
+     "fold_weak_max": 0.32,
+     "call_strong_min": 0.8,
+     "monotonic_call": true,
+     "monotonic_tol": 0.06
+    }
+   },
+   "model_base": "FACTION_SPECS v2 (m4-pool-bots-v2-strength)"
+  },
+  "nl5/recreational": {
+   "seed": 15291594795336059469,
+   "bet_cbb": 0.554,
+   "envelope": {
+    "vpip": [
+     0.35,
+     0.45
+    ],
+    "pfr": [
+     0.18,
+     0.24
+    ],
+    "threebet": [
+     0.04,
+     0.06
+    ]
+   },
+   "post_envelope": {
+    "aggr": {
+     "flop": [
+      0.08,
+      0.48
+     ],
+     "turn": [
+      0.07,
+      0.45
+     ],
+     "river": [
+      0.06,
+      0.42
+     ]
+    },
+    "call": {
+     "flop": [
+      0.42,
+      0.72
+     ],
+     "turn": [
+      0.38,
+      0.72
+     ],
+     "river": [
+      0.35,
+      0.72
+     ]
+    },
+    "strength_conditioned": {
+     "fold_weak_max": 0.8,
+     "call_strong_min": 0.75,
+     "monotonic_call": true,
+     "monotonic_tol": 0.06
+    }
+   },
+   "model_base": "FACTION_SPECS v2 (m4-pool-bots-v2-strength)"
+  },
+  "nl5/semi_reg": {
+   "seed": 12388037383713932104,
+   "bet_cbb": 0.629,
+   "envelope": {
+    "vpip": [
+     0.28,
+     0.35
+    ],
+    "pfr": [
+     0.22,
+     0.27
+    ],
+    "threebet": [
+     0.07,
+     0.09
+    ]
+   },
+   "post_envelope": {
+    "aggr": {
+     "flop": [
+      0.16,
+      0.58
+     ],
+     "turn": [
+      0.14,
+      0.55
+     ],
+     "river": [
+      0.12,
+      0.52
+     ]
+    },
+    "call": {
+     "flop": [
+      0.48,
+      0.78
+     ],
+     "turn": [
+      0.4,
+      0.78
+     ],
+     "river": [
+      0.44,
+      0.78
+     ]
+    },
+    "strength_conditioned": {
+     "fold_weak_max": 0.7,
+     "call_strong_min": 0.82,
+     "monotonic_call": true,
+     "monotonic_tol": 0.06
+    }
+   },
+   "model_base": "FACTION_SPECS v2 (m4-pool-bots-v2-strength)"
+  },
+  "nl5/reg": {
+   "seed": 8299889230736019358,
+   "bet_cbb": 0.642,
+   "envelope": {
+    "vpip": [
+     0.24,
+     0.28
+    ],
+    "pfr": [
+     0.2,
+     0.24
+    ],
+    "threebet": [
+     0.09,
+     0.12
+    ]
+   },
+   "post_envelope": {
+    "aggr": {
+     "flop": [
+      0.2,
+      0.65
+     ],
+     "turn": [
+      0.21,
+      0.62
+     ],
+     "river": [
+      0.18,
+      0.58
+     ]
+    },
+    "call": {
+     "flop": [
+      0.55,
+      0.8
+     ],
+     "turn": [
+      0.5,
+      0.8
+     ],
+     "river": [
+      0.48,
+      0.8
+     ]
+    },
+    "strength_conditioned": {
+     "fold_weak_max": 0.62,
+     "call_strong_min": 0.85,
+     "monotonic_call": true,
+     "monotonic_tol": 0.06
+    }
+   },
+   "model_base": "FACTION_SPECS v2 (m4-pool-bots-v2-strength)"
+  }
+ }
+}
